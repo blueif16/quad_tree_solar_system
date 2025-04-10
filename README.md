@@ -124,3 +124,157 @@ Below is a step-by-step plan to implement the quad tree and Barnes-Hut algorithm
 
 ### Summary
 The quad tree with Barnes-Hut makes your simulation scalable and accurate by reducing force calculation complexity from \( O(N^2) \) to \( O(N \log N) \), allowing you to include all gravitational interactions and add many asteroids without performance issues. The plan above guides you through building the quad tree, computing forces, updating the simulation, and monitoring asteroids, enhancing both realism and functionality. Start by implementing the quad tree structure and insertion logic, then proceed step-by-step, testing as you go. This will transform your simulation into a robust model of a dynamic solar system!
+
+
+
+
+
+Breakdown of your **presentation content with six sections**
+
+### 🔹 **1. Background & Problem (1 min)**  
+**Speaker:** 
+
+#### 🗒️ What to say:
+- Traditional gravitational simulations only compute the force from the Sun to the planets.
+- But real celestial systems have many bodies (e.g., asteroids), which also influence each other.
+- The naive approach has \( O(N^2) \) time complexity — too slow for hundreds of bodies.
+- Our goal is to **efficiently simulate many-body gravitational systems**, including full interactions.
+
+#### 📊 What to show:
+- Diagram of a basic solar system (Sun + planets).
+- Mention what happens when 100+ bodies are added (performance bottleneck).
+- A quick visual comparing \( O(N^2) \) vs \( O(N \log N) \) growth.
+
+---
+
+### 🔹 **2. Barnes-Hut Algorithm Overview (3 min)**  
+**Speaker:** Presenter 2  
+**Time:** 3 min  
+
+#### 🗒️ What to say:
+- Barnes-Hut is a method to **approximate gravitational interactions**.
+- Instead of calculating every pair, we treat distant groups of bodies as a single point mass.
+- Uses an "opening angle" \( \theta \) to decide whether to approximate or recurse.
+- If \( \frac{s}{d} < \theta \), treat the region as one body; else, recurse deeper.
+
+#### 📊 What to show:
+- Illustration of 2D space with particles grouped into regions.
+- Formula:  
+  \[
+  \vec{F} = G \cdot \frac{m_1 m_2}{r^3} \cdot \vec{r}
+  \]
+- Simple animation or sequence showing far bodies grouped into one.
+- Graph showing reduced computations vs increasing N.
+
+---
+
+### 🔹 **3. Quad Tree Algorithm Details (3 min)**  
+**Speaker:** Presenter 3  
+**Time:** 3 min  
+
+#### 🗒️ What to say:
+- Barnes-Hut relies on a **Quad Tree** (for 2D simulation) to organize space.
+- Each node in the tree represents a square region of space.
+- Nodes store:
+  - Total mass
+  - Center of mass
+  - Four child quadrants (NE, NW, SE, SW)
+- Each time step:
+  - Rebuild the tree
+  - Compute force on each body using Barnes-Hut traversal
+
+#### 📊 What to show:
+- Diagram of Quad Tree structure
+- Flowchart of how a body is inserted
+- Example of a body traversing the tree to compute total force
+
+---
+
+### 🔹 **4. Code Structure & Integration (3 min)**  
+**Speaker:** Presenter 4  
+**Time:** 3 min  
+
+#### 🗒️ What to say:
+- Code written in C for performance.
+- Core components:
+  - `Vector2D` struct for force/position
+  - `Body` struct with mass, position, velocity, etc.
+  - `QuadNode` struct for tree nodes
+- Simulation loop:
+  1. Build Quad Tree
+  2. Compute force
+  3. Update motion using Euler integration
+- Key logic:  
+  ```c
+  acceleration = force / mass;
+  velocity += acceleration * dt;
+  position += velocity * dt;
+  ```
+
+#### 📊 What to show:
+- Key struct definitions in C
+- Function snippets: `insert_body()`, `compute_force()`, `update_position()`
+- High-level loop diagram (build tree → compute → update)
+
+---
+
+### 🔹 **5. Asteroid Handling (2 min)**  
+**Speaker:** Presenter 1 or 2  
+**Time:** 2 min  
+
+#### 🗒️ What to say:
+- Asteroids are added just like planets but with smaller mass.
+- Randomly generated positions and velocities.
+- No special handling: inserted into Quad Tree, forces calculated the same way.
+- Allows testing of:
+  - Gravitational drift
+  - Orbit perturbations
+  - Interaction with large bodies
+
+#### 📊 What to show:
+- Sample code: asteroid initialization
+- Visual of an asteroid field interacting with planets
+- Table of asteroid properties (position, velocity, force)
+
+---
+
+### 🔹 **6. Testing, Output & Conclusion (3 min)**  
+**Speaker:** Presenter 3 or 4  
+**Time:** 3 min  
+
+#### 🗒️ What to say:
+- Every frame logs asteroid and planet data to a CSV file:
+  ```csv
+  Time, ID, PosX, PosY, VelX, VelY, ForceX, ForceY, ForceMag
+  ```
+- Output is used to:
+  - Visualize orbits
+  - Track interactions
+  - Analyze gravitational behavior
+
+- **Testing approach**:
+  - Start with 2–3 bodies → verify orbits
+  - Gradually scale up (100+ asteroids)
+
+- **Conclusion:**
+  - Barnes-Hut enables efficient, scalable simulation
+  - C implementation keeps it fast and low-level
+  - Future work:
+    - Add collision detection
+    - Improve numerical integration (Verlet, RK4)
+    - GUI with SDL or OpenGL
+
+#### 📊 What to show:
+- CSV snippet
+- Graph or plot of asteroid trajectory
+- Recap bullet points (performance gain, realism, logging)
+
+---
+
+## ✅ Final Slide (Team Q&A)
+- Names + roles
+- Invite audience questions
+
+---
+
+Let me know if you want me to generate **slide content or speaker notes per slide** (like "what exactly to say") — I can help write those too!
