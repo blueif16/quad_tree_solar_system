@@ -24,9 +24,8 @@
 #define COLOR_BLACK 0x00000000
 
 // Gravitational constant for simulation
-#define G 6.67430e-11  // Actual G value (will be scaled appropriately)
-#define EPSILON 1e-9   // Small value to prevent division by zero
-#define SIMULATION_SCALE 1.0e9 // Scale factor for G in our simulation
+#define G 1.0                // Adjusted gravitational constant for this simulation
+#define EPSILON 1e-9         // Small value to prevent division by zero
 
 // Barnes-Hut opening angle threshold
 #define THETA 0.5
@@ -68,7 +67,7 @@ TTF_Font* load_font(const char* font_path, int font_size);
 void draw_circle_border(SDL_Renderer* renderer, int cx, int cy, int radius, 
                         Uint8 r, Uint8 g, Uint8 b, Uint8 a, int border_thickness);
 void render_bodies(SDL_Renderer* renderer, CelestialBody bodies[], int body_count, 
-                  double pixels_per_AU, TTF_Font* font);
+                  double pixels_per_AU, TTF_Font* font, double dt);
 void DrawButton(SDL_Renderer* renderer, int x, int y, int w, int h, 
                 TTF_Font* font, const char* text, SDL_Color text_color);
 void log_simulation_data(FILE* log_file, CelestialBody bodies[], int body_count, double time);
@@ -102,10 +101,10 @@ int main() {
     double min_zoom = 40.0;        // Minimum zoom level
     double max_zoom = 400.0;       // Maximum zoom level
 
-    double dt = 0.005;             // Time step
-    double dt_step = 0.001;        // How much to change time step
+    double dt = 0.01;              // Time step
+    double dt_step = 0.005;        // How much to change time step
     double min_dt = 0.0001;        // Minimum time step
-    double max_dt = 0.1;           // Maximum time step
+    double max_dt = 0.05;          // Maximum time step
 
     int frame_count = 0;
     int trajectory_interval = 10;
@@ -244,7 +243,7 @@ int main() {
         }
         
         // Render the scene
-        render_bodies(renderer, bodies, body_count, pixels_per_AU, font);
+        render_bodies(renderer, bodies, body_count, pixels_per_AU, font, dt);
         
         // Free the quadtree for this frame
         free_quadtree(root);
@@ -275,7 +274,7 @@ void initialize_simulation(CelestialBody bodies[], int *body_count) {
         bodies[i].y = 0.0;
         bodies[i].vx = 0.0;
         // Set orbital velocity for circular orbits
-        bodies[i].vy = (i == 0) ? 0.0 : sqrt(G * SIMULATION_SCALE * bodies[0].mass / semi_major_axes[i]);
+        bodies[i].vy = (i == 0) ? 0.0 : sqrt(G * bodies[0].mass / semi_major_axes[i]);
         bodies[i].radius = (i == 0) ? 25.0 : 15.0;  // Sun is larger
         bodies[i].color = planet_colors[i];
         bodies[i].trajectory_count = 0;
@@ -309,7 +308,7 @@ void initialize_simulation(CelestialBody bodies[], int *body_count) {
         bodies[idx].mass = 1e-10 + 1e-9 * ((double)rand() / RAND_MAX);
         
         // Orbital velocity for circular orbit around the Sun (with small random variation)
-        double v_orbital = sqrt(G * SIMULATION_SCALE * bodies[0].mass / radius);
+        double v_orbital = sqrt(G * bodies[0].mass / radius);
         double variation = 0.95 + 0.1 * ((double)rand() / RAND_MAX);  // 0.95 to 1.05
         
         // Velocity perpendicular to radius
@@ -380,7 +379,7 @@ void DrawButton(SDL_Renderer* renderer, int x, int y, int w, int h,
 
 // Render celestial bodies with their trajectories
 void render_bodies(SDL_Renderer* renderer, CelestialBody bodies[], int body_count, 
-                  double pixels_per_AU, TTF_Font* font) {
+                  double pixels_per_AU, TTF_Font* font, double dt) {
     // Clear the screen
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
@@ -469,6 +468,24 @@ void render_bodies(SDL_Renderer* renderer, CelestialBody bodies[], int body_coun
             SDL_DestroyTexture(speed_texture);
         }
         SDL_FreeSurface(speed_surface);
+    }
+    
+    // Display current speed value
+    char speed_value[32];
+    snprintf(speed_value, sizeof(speed_value), "dt: %.4f", dt);
+    SDL_Surface* dt_surface = TTF_RenderText_Solid(font, speed_value, text_color);
+    if (dt_surface) {
+        SDL_Texture* dt_texture = SDL_CreateTextureFromSurface(renderer, dt_surface);
+        if (dt_texture) {
+            int text_w, text_h;
+            SDL_QueryTexture(dt_texture, NULL, NULL, &text_w, &text_h);
+            int x = WIDTH - 100 - text_w - 10; // 10 pixels padding from buttons
+            int y = 290;                       // Below the speed buttons
+            SDL_Rect text_rect = {x, y, text_w, text_h};
+            SDL_RenderCopy(renderer, dt_texture, NULL, &text_rect);
+            SDL_DestroyTexture(dt_texture);
+        }
+        SDL_FreeSurface(dt_surface);
     }
     
     // Draw buttons - using exact placement from sdl_render.c
@@ -722,7 +739,7 @@ void calculate_force_from_quadtree(CelestialBody* body, QuadTreeNode* node, doub
         }
         
         // Calculate gravitational force (F = G * m1 * m2 / r^2)
-        double force_magnitude = G * SIMULATION_SCALE * body->mass * node->body->mass / distance_squared;
+        double force_magnitude = G * body->mass * node->body->mass / distance_squared;
         
         // Resolve force into x and y components
         *fx += force_magnitude * dx / distance;
@@ -749,7 +766,7 @@ void calculate_force_from_quadtree(CelestialBody* body, QuadTreeNode* node, doub
             }
             
             // Calculate gravitational force
-            double force_magnitude = G * SIMULATION_SCALE * body->mass * node->total_mass / (distance * distance);
+            double force_magnitude = G * body->mass * node->total_mass / (distance * distance);
             
             // Resolve force into x and y components
             *fx += force_magnitude * dx / distance;
