@@ -26,7 +26,7 @@
 // Gravitational constant for simulation
 #define G 6.67430e-11  // Actual G value (will be scaled appropriately)
 #define EPSILON 1e-9   // Small value to prevent division by zero
-#define SIMULATION_SCALE 1.0 // Scale factor for G in our simulation
+#define SIMULATION_SCALE 1.0e9 // Scale factor for G in our simulation
 
 // Barnes-Hut opening angle threshold
 #define THETA 0.5
@@ -102,7 +102,7 @@ int main() {
     double min_zoom = 40.0;        // Minimum zoom level
     double max_zoom = 400.0;       // Maximum zoom level
 
-    double dt = 0.001;             // Time step
+    double dt = 0.005;             // Time step
     double dt_step = 0.001;        // How much to change time step
     double min_dt = 0.0001;        // Minimum time step
     double max_dt = 0.1;           // Maximum time step
